@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal (normally `http://localhost:5173`). Copy `.env.example` to `.env` only if you need to override the API URL.
+Open the Vite URL shown in the terminal (normally `http://localhost:5173`). The Vite development proxy forwards `/api` requests to `http://localhost:5000`; set `VITE_API_PROXY_TARGET` in `client/.env` to override the local API host. The browser uses the same-origin `/api` path in both local and deployed environments.
 
 ## Run the API
 
@@ -77,6 +77,12 @@ Accounts and pickup data also use MongoDB when configured. In memory mode, test 
 Keep real values in the ignored `server/.env` file. Never commit it. The committed `.env.example` files contain configuration names and local placeholders only; Vite `VITE_*` variables are public and must never contain secrets.
 
 To enable photo classification, configure `VISION_API_URL` (the full OpenAI-compatible chat-completions URL), `VISION_API_KEY`, and `VISION_MODEL` in `server/.env`. The API does not save uploaded images. Without these values, classification returns a clear `503` configuration message.
+
+## Deploy to Vercel
+
+Import this repository as a single Vercel project with the repository root as the project root. The root `vercel.json` defines independent `client` (Vite) and `server` (Express) services. Public `/api/*` requests route to the Express service first; all other paths route to the Vite client. The rewrite preserves the `/api` path, which matches the Express routes. The server entrypoint is `server/src/app.js`, which exports the Express app without starting a local listener.
+
+Configure `MONGODB_URI`, a private random `AUTH_TOKEN_SECRET` (at least 32 characters), and optionally `VISION_API_URL`, `VISION_API_KEY`, and `VISION_MODEL` in Vercel project environment variables for Preview and Production. Never set a service binding URL manually. The client calls the backend through the same-origin public `/api` route, so there is no server-to-server service call and no binding is needed. Use `vercel dev` to test the multi-service routing locally; the normal two-terminal Vite/Express workflow remains available as well.
 
 ## API
 
