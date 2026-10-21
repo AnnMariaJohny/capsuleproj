@@ -19,7 +19,7 @@ async function startServer() {
     console.warn('MONGODB_URI is not set; requests will be stored in memory until the server stops.')
   }
 
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`Reloop API listening on http://localhost:${port}`)
   })
 }

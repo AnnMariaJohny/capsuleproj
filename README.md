@@ -2,6 +2,16 @@
 
 Reloop is a MERN application for responsible e-waste collection. The dashboard includes the citizen pickup journey plus interactive previews of driver, recycling-partner, corporate, and community workflows.
 
+## Project definition
+
+**Problem:** People and organizations need a convenient way to arrange responsible electronics collection and track what happens after pickup.
+
+**Users:** Individuals and company representatives can register and manage their own pickups. Recycling-partner actions are represented in the operations workspace; public signup does not grant partner permissions.
+
+**Core flow:** Create an individual or company account, submit an e-waste pickup request, track its status, and review estimated environmental impact and reward points. Other workspace features support collection operations, asset recovery, corporate reporting, and community drives.
+
+**Acceptance checks:** Individual and company accounts can register and sign in separately. Signed-in users can create and view only their own pickup requests. Invalid requests return a clear error without being saved. The production frontend reaches the API through its configured API URL.
+
 ## Project structure
 
 ```text
@@ -59,7 +69,7 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal (normally `http://localhost:5173`). The Vite development proxy forwards `/api` requests to `http://localhost:5000`; set `VITE_API_PROXY_TARGET` in `client/.env` to override the local API host. The browser uses the same-origin `/api` path in both local and deployed environments.
+Open the Vite URL shown in the terminal (normally `http://localhost:5173`). The Vite development proxy forwards `/api` requests to `http://localhost:5000`; set `VITE_API_PROXY_TARGET` in `client/.env` to override the local API host. In production, set `VITE_API_URL` to the Render API base URL, including `/api`.
 
 ## Run the API
 
@@ -78,11 +88,15 @@ Keep real values in the ignored `server/.env` file. Never commit it. The committ
 
 To enable photo classification, configure `VISION_API_URL` (the full OpenAI-compatible chat-completions URL), `VISION_API_KEY`, and `VISION_MODEL` in `server/.env`. The API does not save uploaded images. Without these values, classification returns a clear `503` configuration message.
 
-## Deploy to Vercel
+## Deploy the API to Render
 
-Import this repository as a single Vercel project with the repository root as the project root. The root `vercel.json` defines independent `client` (Vite) and `server` (Express) services. Public `/api/*` requests route to the Express service first; all other paths route to the Vite client. The rewrite preserves the `/api` path, which matches the Express routes. The server entrypoint is `server/src/app.js`, which exports the Express app without starting a local listener.
+The root `render.yaml` defines a Node web service rooted at `server/`, with `npm ci` as its build command, `npm start` as its start command, and `/api/health` as its health check. Create a Render Blueprint from this repository and set `MONGODB_URI` to a MongoDB Atlas connection string. Render generates `AUTH_TOKEN_SECRET`. After deploying the frontend, set `CLIENT_URL` to its exact Vercel origin, for example `https://your-project.vercel.app`, without a path or trailing slash. Optional photo classification requires `VISION_API_URL`, `VISION_API_KEY`, and `VISION_MODEL` in the Render environment.
 
-Configure `MONGODB_URI`, a private random `AUTH_TOKEN_SECRET` (at least 32 characters), and optionally `VISION_API_URL`, `VISION_API_KEY`, and `VISION_MODEL` in Vercel project environment variables for Preview and Production. Never set a service binding URL manually. The client calls the backend through the same-origin public `/api` route, so there is no server-to-server service call and no binding is needed. Use `vercel dev` to test the multi-service routing locally; the normal two-terminal Vite/Express workflow remains available as well.
+## Deploy the frontend to Vercel
+
+Import this repository as a Vercel project and set **Root Directory** to `client`. Vercel uses the Vite build and output defaults from `client/package.json`; `client/vercel.json` sends deep links back to `index.html`. Set `VITE_API_URL` for Production and Preview to the Render service URL followed by `/api`, for example `https://your-api.onrender.com/api`. This value is public frontend configuration, so never put secrets in it. The Express API is hosted on Render.
+
+Deploy the Render API first, add its URL to Vercel as `VITE_API_URL`, deploy the frontend, then update Render's `CLIENT_URL` with the Vercel origin. Redeploy both services after changing their environment variables.
 
 ## API
 
